@@ -33,26 +33,27 @@ const fetchJson = async (url) => {
 };
 
 const getDashboardData = async (query) => {
-  const nome = fetchJson(`http://localhost:3333/destinations?search=${query}`);
-  const meteo = fetchJson(`http://localhost:3333/weathers?search=${query}`);
-  const aeroporto = fetchJson(`http://localhost:3333/airports?search=${query}`);
-  const risultati = await Promise.allSettled([nome, meteo, aeroporto]);
+  const [nomi, meteo, aeroporti] = await Promise.allSettled([
+    fetchJson(`http://localhost:3333/destinations?search=${query}`),
+    fetchJson(`http://localhost:3333/weathers?search=${query}`),
+    fetchJson(`http://localhost:3333/airports?search=${query}`),
+  ]);
 
-  if (risultati[0].status === "rejected") {
+  if (nomi.status === "rejected") {
     console.error("Errore nella richiesta del nome");
   }
-  if (risultati[1].status === "rejected") {
+  if (meteo.status === "rejected") {
     console.error("Errore nella richiesta del meteo");
   }
-  if (risultati[2].status === "rejected") {
+  if (aeroporti.status === "rejected") {
     console.error("Errore nella richiesta dell'aeroporto ");
   }
   const dati = [
-    risultati[0].status === "fulfilled" ? risultati[0].value : null,
+    nomi.status === "fulfilled" ? nomi.value : null,
 
-    risultati[1].status === "fulfilled" ? risultati[1].value : null,
+    meteo.status === "fulfilled" ? meteo.value : null,
 
-    risultati[2].status === "fulfilled" ? risultati[2].value : null,
+    aeroporti.status === "fulfilled" ? aeroporti.value : null,
   ];
 
   return {

@@ -23,10 +23,19 @@ Testa la funzione con un link fittizio per il meteo (es. https://www.meteofittiz
 
 */
 
+const fetchJson = async (url) => {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Errore HTTP: ${response.status}`);
+  }
+  const obj = await response.json();
+  return obj;
+};
+
 const getDashboardData = async (query) => {
-  const nome = fetch(`http://localhost:3333/destinations?search=${query}`);
-  const meteo = fetch(`http://localhost:3333/weathers?search=${query}`);
-  const aeroporto = fetch(`http://localhost:3333/airports?search=${query}`);
+  const nome = fetchJson(`http://localhost:3333/destinations?search=${query}`);
+  const meteo = fetchJson(`http://localhost:3333/weathers?search=${query}`);
+  const aeroporto = fetchJson(`http://localhost:3333/airports?search=${query}`);
   const risultati = await Promise.allSettled([nome, meteo, aeroporto]);
 
   if (risultati[0].status === "rejected") {
@@ -38,13 +47,13 @@ const getDashboardData = async (query) => {
   if (risultati[2].status === "rejected") {
     console.error("Errore nella richiesta dell'aeroporto ");
   }
-  const dati = await Promise.all([
-    risultati[0].status === "fulfilled" ? risultati[0].value.json() : null,
+  const dati = [
+    risultati[0].status === "fulfilled" ? risultati[0].value : null,
 
-    risultati[1].status === "fulfilled" ? risultati[1].value.json() : null,
+    risultati[1].status === "fulfilled" ? risultati[1].value : null,
 
-    risultati[2].status === "fulfilled" ? risultati[2].value.json() : null,
-  ]);
+    risultati[2].status === "fulfilled" ? risultati[2].value : null,
+  ];
 
   return {
     city: dati[0] !== null && dati[0].length > 0 ? dati[0][0].name : null,

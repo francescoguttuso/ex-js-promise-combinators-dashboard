@@ -7,31 +7,55 @@ Restituire una Promise che risolve un oggetto contenente i dati aggregati.
 Stampare i dati in console in un messaggio ben formattato.
 Testa la funzione con la query "london"
 
-
-/*
 Bonus 1 - Risultato vuoto
 Se l’array di ricerca è vuoto, invece di far fallire l'intera funzione, 
 semplicemente i dati relativi a quella chiamata verranno settati a null e 
  la frase relativa non viene stampata.
  Testa la funzione con la query “vienna” (non trova il meteo).
+
+ Bonus 2 - Chiamate fallite
+Attualmente, se una delle chiamate fallisce, Promise.all() rigetta l'intera operazione.
+
+Modifica getDashboardData() per usare Promise.allSettled(), in modo che:
+Se una chiamata fallisce, i dati relativi a quella chiamata verranno settati a null.
+Stampa in console un messaggio di errore per ogni richiesta fallita.
+Testa la funzione con un link fittizio per il meteo (es. https://www.meteofittizio.it).
+
 */
 
 const getDashboardData = async (query) => {
   const nome = fetch(`http://localhost:3333/destinations?search=${query}`);
   const meteo = fetch(`http://localhost:3333/weathers?search=${query}`);
   const aeroporto = fetch(`http://localhost:3333/airports?search=${query}`);
-  const risultati = await Promise.all([nome, meteo, aeroporto]);
+  const risultati = await Promise.allSettled([nome, meteo, aeroporto]);
+
+  if (risultati[0].status === "rejected") {
+    console.error("Errore nella richiesta del nome");
+  }
+  if (risultati[1].status === "rejected") {
+    console.error("Errore nella richiesta del meteo");
+  }
+  if (risultati[2].status === "rejected") {
+    console.error("Errore nella richiesta dell'aeroporto ");
+  }
   const dati = await Promise.all([
-    risultati[0].json(),
-    risultati[1].json(),
-    risultati[2].json(),
+    risultati[0].status === "fulfilled" ? risultati[0].value.json() : null,
+
+    risultati[1].status === "fulfilled" ? risultati[1].value.json() : null,
+
+    risultati[2].status === "fulfilled" ? risultati[2].value.json() : null,
   ]);
+
   return {
-    city: dati[0].length > 0 ? dati[0][0].name : null,
-    country: dati[0].length > 0 ? dati[0][0].country : null,
-    temperature: dati[1].length > 0 ? dati[1][0].temperature : null,
-    weather: dati[1].length > 0 ? dati[1][0].weather_description : null,
-    airport: dati[2].length > 0 ? dati[2][0].name : null,
+    city: dati[0] !== null && dati[0].length > 0 ? dati[0][0].name : null,
+    country: dati[0] !== null && dati[0].length > 0 ? dati[0][0].country : null,
+    temperature:
+      dati[1] !== null && dati[1].length > 0 ? dati[1][0].temperature : null,
+    weather:
+      dati[1] !== null && dati[1].length > 0
+        ? dati[1][0].weather_description
+        : null,
+    airport: dati[2] !== null && dati[2].length > 0 ? dati[2][0].name : null,
   };
 };
 
